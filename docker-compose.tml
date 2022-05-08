@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 88:88
+    env_file:
+      - db.env
+    volumes:
+      - ./nginx/logs:/etc/log/nginx
+      - static_data:/var/www/messenger/static
+  db:
+    image: postgres:14.2-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - db.env
+  web:
+    build: ./messenger
+    command: messenger
+    depends_on:
+      - db
+    expose:
+      - 8000
+    env_file:
+      - web.env
+volumes:
+  postgres_data:
+    name: messenger_pg
+  static_data:
+    name: messenger_static
+
