@@ -17,7 +17,7 @@ services:
     env_file:
       - db.env
   web:
-    build: ./messenger
+    build: ./web
     command: messenger
     depends_on:
       - db
