@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::list_users)
             .service(handlers::inner_messages)
             .service(handlers::create_message)
+            .route("/ws/", web::get().to(handlers::websocket))
     })
         .bind((config.host, config.port))?
         .run()

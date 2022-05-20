@@ -1,4 +1,6 @@
-use actix_web::{get, post, web, HttpResponse, Error};
+use actix::{Actor, StreamHandler};
+use actix_web::{get, post, web, HttpRequest, HttpResponse, Error};
+use actix_web_actors::ws;
 use crate::{db::PgPool, schema::{users, messages}, models::{User, Message, NewMessage}};
 use diesel::prelude::*;
 
@@ -41,5 +43,26 @@ async fn create_message(pool: web::Data<PgPool>, data: web::Json<NewMessage>) ->
         .expect("Error saving new message");
 
     Ok(HttpResponse::Ok().json(data))
+}
+
+struct MyWs;
+
+impl Actor for MyWs {
+    type Context = ws::WebsocketContext<Self>;
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        match msg {
+            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+            Ok(ws::Message::Text(text)) => ctx.text(text),
+            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
+            _ => (),
+        }
+    }
+}
+
+pub async fn websocket(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
+    ws::start(MyWs {}, &req, stream)
 }
 
